@@ -69,8 +69,6 @@ def transform(df):
     df = convert_df(df, 'MC_GBP_Billion', 'GBP') 
     df = convert_df(df, 'MC_EUR_Billion', 'EUR') 
     df = convert_df(df, 'MC_IND_Billion', 'INR') 
-
-    print(df)
     return df
 
 def load_to_csv(df, csv_path):
@@ -114,32 +112,31 @@ db_name = 'Banks.db'
 table_name = 'Largest_banks'
 csv_path = './Largest_banks_data.csv'
 
-# log_progress('Preliminaries complete. Initiating ETL process')
+log_progress('Preliminaries complete. Initiating ETL process')
 
 df = extract(url, table_attribs)
 
-# log_progress('Data extraction complete. Initiating Transformation process')
+log_progress('Data extraction complete. Initiating Transformation process')
 
 df = transform(df)
 
-
-# log_progress('Data transformation complete. Initiating loading process')
+log_progress('Data transformation complete. Initiating loading process')
 
 load_to_csv(df, csv_path)
 
-# log_progress('Data saved to CSV file')
+log_progress('Data saved to CSV file')
 
-# sql_connection = sqlite3.connect('World_Economies.db')
+sql_connection = sqlite3.connect(db_name)
 
-# log_progress('SQL Connection initiated.')
+log_progress('SQL Connection initiated.')
 
-# load_to_db(df, sql_connection, table_name)
+load_to_db(df, sql_connection, table_name)
 
-# log_progress('Data loaded to Database as table. Running the query')
+log_progress('Data loaded to Database as table. Running the query')
 
-# query_statement = f"SELECT * from {table_name} WHERE GDP_USD_billions >= 100"
-# run_query(query_statement, sql_connection)
+query_statement = f"SELECT Name, MC_USD_Billion from {table_name} WHERE MC_USD_Billion >= 150"
+run_query(query_statement, sql_connection)
 
-# log_progress('Process Complete.')
+log_progress('Process Complete.')
 
-# sql_connection.close()
+sql_connection.close()
