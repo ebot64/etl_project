@@ -3,6 +3,7 @@
 # Importing the required libraries
 
 from bs4 import BeautifulSoup
+import csv
 import requests
 import pandas as pd
 import numpy as np
@@ -12,7 +13,7 @@ from datetime import datetime
 def extract(url, table_attribs):
     ''' The purpose of this function is to extract the required
     information from the website and save it to a dataframe. The
-    function returns the dataframe for further processing. '''
+    function returns the dataframe for further processing/transformation. '''
 
     page = requests.get(url).text
     data = BeautifulSoup(page,'html.parser')
@@ -31,17 +32,45 @@ def extract(url, table_attribs):
             df = pd.concat([df,df1], ignore_index=True)
     return df
 
+def convert_csv_to_dict(csv_file):
+    # Initialize an empty list to store the dictionaries
+    data_dict = {}
+
+    # Open and read the CSV file
+    with open(csv_file, mode='r') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        next(csv_reader) # skip the header row
+        for row in csv_reader:
+            key = row[0]
+            value = row[1]
+            data_dict[key] = value
+        
+    return data_dict
+
+def convert_df(df, column_name, currency):
+    '''This function creates a new dataframe column which is a 
+    currency conversion from USD_Billion to the given currency 
+    and outputs the converted values to float of 2 decimal places'''
+
+    conversion_dict = convert_csv_to_dict('exchange_rate.csv')
+    df[column_name] = df['MC_USD_Billion'] * float(conversion_dict[currency])
+    df[column_name] = df[column_name].round(2)
+    return df
+
 def transform(df):
     ''' This function converts the GDP information from Currency
     format to float value, transforms the information of GDP from
     USD (Millions) to USD (Billions) rounding to 2 decimal places.
     The function returns the transformed dataframe.'''
 
-    GDP_list = df["GDP_USD_millions"].tolist()
-    GDP_list = [float("".join(x.split(','))) for x in GDP_list]
-    GDP_list = [np.round(x/1000,2) for x in GDP_list]
-    df["GDP_USD_millions"] = GDP_list
-    df=df.rename(columns = {"GDP_USD_millions":"GDP_USD_billions"})
+    # Convert MS_USD_Billion to float data type
+    df['MC_USD_Billion'] = df['MC_USD_Billion'].astype(float)
+
+    df = convert_df(df, 'MC_GBP_Billion', 'GBP') 
+    df = convert_df(df, 'MC_EUR_Billion', 'EUR') 
+    df = convert_df(df, 'MC_IND_Billion', 'INR') 
+
+    print(df)
     return df
 
 def load_to_csv(df, csv_path):
@@ -85,18 +114,18 @@ db_name = 'Banks.db'
 table_name = 'Largest_banks'
 csv_path = './Largest_banks_data.csv'
 
-log_progress('Preliminaries complete. Initiating ETL process')
+# log_progress('Preliminaries complete. Initiating ETL process')
 
 df = extract(url, table_attribs)
-print(df)
 
 # log_progress('Data extraction complete. Initiating Transformation process')
 
-# df = transform(df)
+df = transform(df)
+
 
 # log_progress('Data transformation complete. Initiating loading process')
 
-# load_to_csv(df, csv_path)
+load_to_csv(df, csv_path)
 
 # log_progress('Data saved to CSV file')
 
