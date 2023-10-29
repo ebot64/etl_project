@@ -25,14 +25,22 @@ def extract(url, table_attribs):
         if len(col)!=0:
             anchors = col[1].find_all('a')
             name = anchors[1].get_text()
+            #bank_name = col[1].find_all('a')[1]['title']
+            #print(f'bank name ' + bank_name)
             mc = col[2].contents[0]
+            #mcflex = float(col[2].contents[0][:-1])
+            #mcc = mcflex + 50.33
+            #print(f'mcc ' + str(mcc))
+            mc_final = mc[:-1] #Remove the last \n character
             data_dict = {"Name": name,
-                        "MC_USD_Billion": mc}
+                        "MC_USD_Billion": mc_final}
             df1 = pd.DataFrame(data_dict, index=[0])
             df = pd.concat([df,df1], ignore_index=True)
     return df
 
 def convert_csv_to_dict(csv_file):
+    '''This function converts the exchange rate csv file to 
+    a map (dictionary)'''
     # Initialize an empty list to store the dictionaries
     data_dict = {}
 
@@ -115,6 +123,7 @@ csv_path = './Largest_banks_data.csv'
 log_progress('Preliminaries complete. Initiating ETL process')
 
 df = extract(url, table_attribs)
+print(df)
 
 log_progress('Data extraction complete. Initiating Transformation process')
 
